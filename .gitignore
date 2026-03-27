@@ -32,6 +32,15 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+
+# SQLite database
+/data/*.db
+/data/*.db-shm
+/data/*.db-wal
+
+# XMTP agent local database (Phase 5)
+/xmtp/*.db
 
 # vercel
 .vercel

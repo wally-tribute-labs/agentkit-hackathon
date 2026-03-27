@@ -12,15 +12,15 @@ A Next.js 15 Mini App where World ID-verified humans report local weather condit
 
 ## Development Commands
 
-This project does not exist yet — it needs to be scaffolded. Use the file structure in `project.md` as the blueprint. Expected commands once scaffolded:
-
 ```bash
-npx create-next-app@latest world-hack --typescript --tailwind --app
-cd world-hack
-npm run dev          # start dev server
+npm run dev          # start dev server (localhost:3000)
 npm run build        # production build
 npm run lint         # ESLint
+npx tsx scripts/seed.ts       # seed SQLite with demo observations (Phase 2+)
+npx tsx xmtp/agent.ts         # run XMTP agent process (Phase 5+)
 ```
+
+Copy `.env.example` to `.env.local` and fill in values before running.
 
 ## Architecture
 
@@ -40,7 +40,7 @@ Next.js 15 App Router with three main surfaces:
 
 ### x402 pattern
 
-Use `x402-next` middleware with `withX402` wrapper on the agent API route. Route configs live in `src/lib/x402/config.ts`. Payment address configured via `X402_PAY_TO` env var. Use base-sepolia for hackathon, base mainnet for production.
+Use `@x402/next` (NOT `x402-next`) with `withX402` wrapper on individual route handlers. Requires a server setup in `src/lib/x402/config.ts` with `x402ResourceServer`, `HTTPFacilitatorClient` from `@x402/core/server`, and `ExactEvmScheme` from `@x402/evm/exact/server`. Route configs specify `{ scheme: 'exact', price: '$0.001', network: 'eip155:84532', payTo: EVM_ADDRESS }`. See coinbase/x402 repo `examples/typescript/fullstack/next/` for the reference implementation.
 
 ### World ID pattern
 
@@ -51,26 +51,27 @@ Use `x402-next` middleware with `withX402` wrapper on the agent API route. Route
 
 ## Environment Variables
 
+See `.env.example` for the full documented template. Key vars:
+
 ```
-NEXT_PUBLIC_APP_ID=app_...          # World Developer Portal app ID
-AUTH_SECRET=...                     # NextAuth secret
-HMAC_SECRET_KEY=...                 # Wallet nonce HMAC
-AUTH_URL=https://...                # Public URL
-X402_PAY_TO=0x...                   # USDC receiving address
-X402_NETWORK=base-sepolia           # base-sepolia for hackathon
+NEXT_PUBLIC_APP_ID=app_...     # World Developer Portal app ID
+EVM_ADDRESS=0x...              # USDC receiving address for x402 payments
+FACILITATOR_URL=https://...    # x402 CDP facilitator URL
+X402_NETWORK=eip155:84532      # base-sepolia testnet
+NEXT_PUBLIC_DEV_SKIP_VERIFY=true  # bypass World ID locally (dev only)
 ```
 
 ## Key Dependencies
 
 - `@worldcoin/minikit-js` + `@worldcoin/idkit` — World ID verification
-- `x402-next` + `viem` — HTTP-native micropayment gating
-- `wagmi` — wallet connection (worldApp + coinbaseWallet connectors)
-- `better-sqlite3` — observation storage (SQLite, sufficient for hackathon)
-- Open-Meteo API — free weather baseline, no API key required
+- `@x402/next` + `@x402/core` + `@x402/evm` — x402 HTTP payment gating
+- `@worldcoin/agentkit` — AgentKit extension for human-backed agents (install in Phase 2)
+- `wagmi` + `viem` — wallet connection and chain interactions
+- `better-sqlite3` — SQLite observation storage
 - `h3-js` — H3 hex cell geofencing for consensus grouping
+- `leaflet` + `react-leaflet` — map visualization (use dynamic import, SSR disabled)
+- Open-Meteo API — free weather baseline, no API key required
 
-## Hackathon Scope
+## Phased Development
 
-Phase 1 (submission): core observation flow, World ID, x402 API, consensus aggregation, map visualization, testnet payments, SQLite storage. Seed with mock observations for demo density.
-
-Phase 2 (post-hackathon): Postgres/Drizzle, push notifications, photo AI processing, native app (barometer access), mainnet payments.
+See `PHASES.md` for the full development roadmap with goals, integration details, and "done" criteria for each phase. Each phase is designed as an independent implementation session.
