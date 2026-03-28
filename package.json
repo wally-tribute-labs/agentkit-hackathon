@@ -10,6 +10,8 @@
     "xmtp": "tsx xmtp/agent.ts"
   },
   "dependencies": {
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.5.0",
     "@tanstack/react-query": "^5.95.2",
     "@worldcoin/agentkit": "^0.1.5",
     "@worldcoin/idkit": "^4.0.11",
@@ -19,12 +21,15 @@
     "@x402/next": "^2.8.0",
     "@xmtp/agent-sdk": "^2.3.0",
     "better-sqlite3": "^12.8.0",
+    "framer-motion": "^12.38.0",
     "h3-js": "^4.4.0",
     "leaflet": "^1.9.4",
+    "lucide-react": "^1.7.0",
     "next": "16.2.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-leaflet": "^5.0.0",
+    "three": "^0.183.2",
     "viem": "^2.47.6",
     "wagmi": "^3.6.0"
   },
@@ -35,6 +40,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/three": "^0.183.1",
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
     "tailwindcss": "^4",
