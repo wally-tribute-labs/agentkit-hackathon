@@ -6,15 +6,18 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "xmtp": "tsx xmtp/agent.ts"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.95.2",
+    "@worldcoin/agentkit": "^0.1.5",
     "@worldcoin/idkit": "^4.0.11",
     "@worldcoin/minikit-js": "^1.11.0",
     "@x402/core": "^2.8.0",
     "@x402/evm": "^2.8.0",
     "@x402/next": "^2.8.0",
+    "@xmtp/agent-sdk": "^2.3.0",
     "better-sqlite3": "^12.8.0",
     "h3-js": "^4.4.0",
     "leaflet": "^1.9.4",

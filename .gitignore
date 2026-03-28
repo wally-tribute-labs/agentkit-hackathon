@@ -41,6 +41,7 @@ yarn-error.log*
 
 # XMTP agent local database (Phase 5)
 /xmtp/*.db
+*.db3
 
 # vercel
 .vercel
