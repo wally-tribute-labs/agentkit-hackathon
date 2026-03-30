@@ -1,7 +1,7 @@
 'use client';
 
 import {
-  Sun, Cloud, CloudRain, Snowflake, CloudFog, CloudLightning, Wind, Cloudy,
+  Sun, Cloud, CloudRain, Snowflake, CloudFog, CloudLightning, Wind, Eye,
   type LucideProps,
 } from 'lucide-react';
 import type { WeatherCondition } from '@/types/weather';
@@ -14,7 +14,7 @@ const CONDITION_ICONS: Record<WeatherCondition, React.FC<LucideProps>> = {
   fog:     CloudFog,
   storm:   CloudLightning,
   windy:   Wind,
-  haze:    Cloudy,
+  haze:    Eye,
 };
 
 const CONDITION_COLORS: Record<WeatherCondition, string> = {
@@ -35,7 +35,7 @@ interface WeatherIconProps extends LucideProps {
 }
 
 export function WeatherIcon({ condition, colorized = false, size = 24, strokeWidth = 1.5, color, ...props }: WeatherIconProps) {
-  const Icon = CONDITION_ICONS[condition];
+  const Icon = CONDITION_ICONS[condition] ?? Cloud;
   const resolvedColor = color ?? (colorized ? CONDITION_COLORS[condition] : undefined);
   return <Icon size={size} strokeWidth={strokeWidth} color={resolvedColor} {...props} />;
 }

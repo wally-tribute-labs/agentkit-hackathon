@@ -26,7 +26,7 @@ const DEMO: CellData = {
   humanCount: 12, agreementRate: 0.92, signalStrength: 'ground_truth',
 };
 
-export function HeroScenario() {
+export function HeroScenario({ compact = false }: { compact?: boolean }) {
   const [cell, setCell] = useState<CellData | null>(null);
   const [loaded, setLoaded] = useState(false);
 
@@ -47,7 +47,7 @@ export function HeroScenario() {
   const display = cell ?? (loaded ? DEMO : null);
 
   if (!display) {
-    return <div className="w-full h-36 shimmer-skeleton rounded-2xl" />;
+    return <div className={`w-full shimmer-skeleton rounded-2xl ${compact ? 'h-24' : 'h-36'}`} />;
   }
 
   const modelCond   = display.modelCondition;
@@ -67,11 +67,11 @@ export function HeroScenario() {
         backdropFilter: 'blur(24px)',
         WebkitBackdropFilter: 'blur(24px)',
         border: '1px solid var(--border-glass)',
-        borderRadius: '20px',
+        borderRadius: compact ? '16px' : '20px',
       }}
     >
       {/* Header */}
-      <div className="px-4 py-2.5 flex items-center gap-2"
+      <div className={`${compact ? 'px-3 py-2' : 'px-4 py-2.5'} flex items-center gap-2`}
         style={{ borderBottom: '1px solid var(--border-glass)', background: 'rgba(0,0,0,0.2)' }}>
         <TrendingUp size={14} strokeWidth={2} style={{ color: 'var(--cyan)' }} />
         <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-display)' }}>
@@ -83,7 +83,7 @@ export function HeroScenario() {
         {/* AI Model side */}
         <motion.div
           variants={staggerItem}
-          className="p-5 flex flex-col items-center gap-2.5"
+          className={`${compact ? 'p-3' : 'p-5'} flex flex-col items-center gap-2.5`}
           style={{ background: 'rgba(245,158,11,0.03)', borderRight: '1px solid var(--border-glass)' }}
         >
           <div className="flex items-center gap-1.5">
@@ -94,20 +94,20 @@ export function HeroScenario() {
             </span>
           </div>
           {modelCond ? (
-            <WeatherIcon condition={modelCond} size={38} strokeWidth={1.25} color={modelColor} />
+            <WeatherIcon condition={modelCond} size={compact ? 24 : 38} strokeWidth={1.25} color={modelColor} />
           ) : (
-            <Bot size={38} strokeWidth={1.25} style={{ color: 'var(--amber)' }} />
+            <Bot size={compact ? 24 : 38} strokeWidth={1.25} style={{ color: 'var(--amber)' }} />
           )}
           <p className="text-sm font-bold" style={{ color: 'var(--amber-light)', fontFamily: 'var(--font-display)' }}>
             {modelCond ? CONDITION_LABEL[modelCond] : 'Unknown'}
           </p>
-          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>prediction</p>
+          {!compact && <p className="text-xs" style={{ color: 'var(--text-muted)' }}>prediction</p>}
         </motion.div>
 
         {/* Humans side */}
         <motion.div
           variants={staggerItem}
-          className="p-5 flex flex-col items-center gap-2.5"
+          className={`${compact ? 'p-3' : 'p-5'} flex flex-col items-center gap-2.5`}
           style={{ background: 'rgba(6,182,212,0.03)' }}
         >
           <div className="flex items-center gap-1.5">
@@ -122,7 +122,7 @@ export function HeroScenario() {
               <Users size={11} strokeWidth={2} /> {display.humanCount} {display.humanCount === 1 ? 'Human' : 'Humans'}
             </span>
           </div>
-          <WeatherIcon condition={humanCond} size={38} strokeWidth={1.25} color={humanColor} />
+          <WeatherIcon condition={humanCond} size={compact ? 24 : 38} strokeWidth={1.25} color={humanColor} />
           <p className="text-sm font-bold" style={{ color: 'var(--cyan-light)', fontFamily: 'var(--font-display)' }}>
             {CONDITION_LABEL[humanCond]}
           </p>
@@ -131,8 +131,8 @@ export function HeroScenario() {
       </motion.div>
 
       {/* Agreement bar */}
-      <div className="px-5 py-4" style={{ borderTop: '1px solid var(--border-glass)', background: 'rgba(0,0,0,0.12)' }}>
-        <div className="flex items-center justify-between mb-2.5">
+      <div className={`${compact ? 'px-3 py-2.5' : 'px-5 py-4'}`} style={{ borderTop: '1px solid var(--border-glass)', background: 'rgba(0,0,0,0.12)' }}>
+        <div className={`flex items-center justify-between ${compact ? 'mb-1.5' : 'mb-2.5'}`}>
           <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Human agreement</span>
           <span className="text-xs font-bold" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
             {agreePct}%

@@ -177,6 +177,27 @@ h1, h2, h3 {
   animation: fade-in-up 0.45s cubic-bezier(0.0, 0.0, 0.2, 1) 0.24s both;
 }
 
+/* ─── Bento Home Grid ──────────────────────────────────────────────────────── */
+.bento-home {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+@media (min-width: 768px) {
+  .bento-home {
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) 1.5fr 1.5fr minmax(220px, 1fr);
+    grid-template-rows: 1fr 1fr 1fr;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  @supports not (height: 100dvh) {
+    .bento-home { height: 100vh; }
+  }
+}
+
 /* ─── Leaflet Dark Mode Overrides ──────────────────────────────────────────── */
 .leaflet-container {
   background: var(--bg-primary) !important;
