@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GROUNDSIGNAL_MODE: demo
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npm audit --omit=dev --audit-level=high
+
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GROUNDSIGNAL_MODE: demo
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - name: Build self-host image
+        run: docker build -t groundsignal:ci .
+      - name: Verify deterministic demo container
+        run: |
+          docker run --rm -d --name groundsignal-demo -p 3000:3000 groundsignal:ci
+          trap 'docker rm -f groundsignal-demo >/dev/null 2>&1 || true' EXIT
+          if ! curl --fail --silent --show-error --retry 20 --retry-delay 1 --retry-all-errors \
+            http://127.0.0.1:3000/api/health | grep '"mode":"demo"'; then
+            docker logs groundsignal-demo
+            exit 1
+          fi
+      - name: Verify SQLite migration and restart persistence
+        run: |
+          docker volume create groundsignal-ci-data
+          trap 'docker rm -f groundsignal-sqlite-restart >/dev/null 2>&1 || true; docker volume rm groundsignal-ci-data >/dev/null 2>&1 || true' EXIT
+          docker run --rm --user root -v groundsignal-ci-data:/app/data groundsignal:ci \
+            chown -R nextjs:nodejs /app/data
+          docker run --rm -v groundsignal-ci-data:/app/data \
+            -e GROUNDSIGNAL_DB_PATH=/app/data/groundsignal.db \
+            groundsignal:ci node db-migrate.js
+          docker run --rm -d --name groundsignal-sqlite -p 3001:3000 \
+            -v groundsignal-ci-data:/app/data \
+            -e GROUNDSIGNAL_MODE=sqlite \
+            -e GROUNDSIGNAL_DB_PATH=/app/data/groundsignal.db \
+            -e OBSERVER_SESSION_SECRET=ci-only-session-secret-with-at-least-32-bytes \
+            groundsignal:ci
+          if ! curl --fail --silent --show-error --retry 20 --retry-delay 1 --retry-all-errors \
+            http://127.0.0.1:3001/api/health | grep '"mode":"sqlite"'; then
+            docker logs groundsignal-sqlite
+            exit 1
+          fi
+          docker stop groundsignal-sqlite
+          docker run --rm -d --name groundsignal-sqlite-restart -p 3002:3000 \
+            -v groundsignal-ci-data:/app/data \
+            -e GROUNDSIGNAL_MODE=sqlite \
+            -e GROUNDSIGNAL_DB_PATH=/app/data/groundsignal.db \
+            -e OBSERVER_SESSION_SECRET=ci-only-session-secret-with-at-least-32-bytes \
+            groundsignal:ci
+          if ! curl --fail --silent --show-error --retry 20 --retry-delay 1 --retry-all-errors \
+            http://127.0.0.1:3002/api/health | grep '"mode":"sqlite"'; then
+            docker logs groundsignal-sqlite-restart
+            exit 1
+          fi
