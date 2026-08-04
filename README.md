@@ -1,184 +1,111 @@
-# World Hack: Human-Verified Weather Oracle
+# GroundSignal
 
-A World Chain hackathon submission — a World Mini App where verified humans report local weather conditions, and AI agents query consensus-scored observations via x402 micropayments.
+[![CI](https://github.com/wally-tribute-labs/agentkit-hackathon/actions/workflows/ci.yml/badge.svg)](https://github.com/wally-tribute-labs/agentkit-hackathon/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-2F4A3F.svg)](LICENSE)
 
-**The core value prop**: the delta between Open-Meteo model predictions and human ground truth. "Model said clear. 8 verified humans say rain. Confidence: 92%."
+> When the model says clear, ask the ground.
 
----
+GroundSignal is an open-source reference implementation for consensus-scored, proof-of-human observations about the physical world. Weather is the v1 adapter: a deterministic San Francisco scenario shows a forecast saying clear while twelve explicitly simulated observers report eleven rain and one cloudy, producing 91.67% agreement and a `ground_truth` signal.
 
-## How it works
+The default experience is a practical demo, not a live network. It needs no users, wallet, database account, credentials, or paid infrastructure.
 
-1. **Human reports**: A World ID-verified human opens the app, GPS is captured, Open-Meteo baseline is fetched, they tap their observed conditions, and submit.
-2. **Consensus builds**: Observations are grouped by H3 hex cell (~500m) and 30-minute time window. Agreement rate and signal strength are computed.
-3. **Agents query**: AI agents send an x402 micropayment to `GET /api/v1/weather` and receive consensus-scored observations with model delta.
-4. **Humans earn**: Query fees are distributed to contributors in the queried cell/window.
+![GroundSignal landing page showing the San Francisco field scenario](docs/assets/groundsignal-landing.png)
 
-## Architecture
+[Watch the deterministic demo recording](docs/assets/groundsignal-demo.webm) ·
+[Consensus trace screenshot](docs/assets/groundsignal-consensus.png) ·
+[Agent console screenshot](docs/assets/groundsignal-developers.png) ·
+[Mobile field test](docs/assets/groundsignal-mobile.png)
 
-```
-User Clients (World App / Coinbase Wallet / Browser)
-    |
-    v
-Next.js 15 App
-    ├── POST /api/verify-proof      -- World ID proof validation
-    ├── POST /api/observations      -- store observation + model baseline
-    ├── GET  /api/v1/weather        -- x402-gated consensus response
-    └── GET  /api/v1/openapi        -- OpenAPI spec
-    |
-    ├── SQLite (observations)
-    ├── Open-Meteo API (free baseline)
-    └── Consensus engine (H3 hex + time window aggregation)
-```
+## What is real
 
-## Tech stack
+- A pure TypeScript consensus engine using H3 resolution 8 and thirty-minute UTC windows.
+- A deterministic replay, a browser-local contribution, and one shared typed agent response.
+- A free fixture API and an optional x402 Base Sepolia endpoint.
+- Explicit SQLite migrations and repositories for single-instance self-hosting.
+- Credential-gated adapters for World ID 4, AgentKit, and XMTP.
 
-| Layer | Technology |
-|-------|-----------|
-| Framework | Next.js 15 App Router + TypeScript + Tailwind |
-| World ID | `@worldcoin/minikit-js` (World App) + `@worldcoin/idkit` (browser) |
-| Payments | `@x402/next` + `@x402/core` + `@x402/evm` (x402 on Base Sepolia) |
-| AgentKit | `@worldcoin/agentkit` extension for human-backed agent detection |
-| Geofencing | `h3-js` H3 hex cells at resolution 7 (~500m) |
-| Storage | `better-sqlite3` SQLite |
-| Map | `leaflet` + `react-leaflet` |
-| Wallet | `wagmi` + `viem` |
-| XMTP | `@xmtp/agent-sdk` messaging agent (bonus bounty) |
+All demo observers, receipts, and credits are labeled `SIMULATED`. GroundSignal makes no claim of live users, contributor earnings, mainnet settlement, or production-grade geolocation fraud prevention.
 
-## Hackathon integrations
+## Quick start
 
-- **World ID** — zero-knowledge proof of personhood. MiniKit in World App, IDKit widget in browser/Coinbase Wallet.
-- **Coinbase x402** — HTTP-native micropayments. `withX402` middleware gates the agent API. Dynamic pricing by signal strength tier.
-- **XMTP** — optional $5K bounty. Standalone agent that responds to weather queries via encrypted messages.
-
-## Signal strength tiers + pricing
-
-| Tier | Reporters | Agreement | Price |
-|------|-----------|-----------|-------|
-| solo | 1 | any | $0.001 |
-| corroborated | 3–5 | ≥60% | $0.005 |
-| strong | 5–10 | ≥70% | $0.01 |
-| ground_truth | 10+ | ≥80% | $0.02 |
-
-## Setup
+Requirements: Node.js 22 and npm.
 
 ```bash
+npm ci
 cp .env.example .env.local
-# fill in values (see below)
-npm install
 npm run dev
 ```
 
-## Environment variables
-
-```env
-# World ID
-NEXT_PUBLIC_APP_ID=app_...         # World Developer Portal app ID
-
-# x402 payments
-EVM_ADDRESS=0x...                  # USDC receiving address
-FACILITATOR_URL=https://...        # CDP facilitator URL
-X402_NETWORK=eip155:84532          # base-sepolia testnet
-
-# Dev only
-NEXT_PUBLIC_DEV_SKIP_VERIFY=true   # bypass World ID locally
-```
-
-See `.env.example` for the full documented template.
-
-## Commands
+Open [http://localhost:3000](http://localhost:3000), then run the field test at `/demo`.
 
 ```bash
-npm run dev                         # start dev server (localhost:3000)
-npm run build                       # production build
-npm run lint                        # ESLint
+# All local quality gates
+npm run check
 
-npx tsx scripts/seed.ts             # seed SQLite with demo observations
-npx tsx xmtp/agent.ts               # run XMTP agent (Phase 5+)
+# Browser tests (install Chromium once)
+npx playwright install chromium
+npm run test:e2e
 ```
 
-## Agent API
+## API
 
-```
-GET /api/v1/weather?lat={lat}&lon={lon}&radius={meters}
-```
+The free endpoint is immutable and deterministic:
 
-Requires x402 payment. Returns:
-
-```json
-{
-  "consensus": {
-    "condition": "Rain",
-    "agreementRate": 0.92,
-    "reporterCount": 8,
-    "signalStrength": "ground_truth",
-    "modelDelta": "Model predicted Clear"
-  },
-  "h3Cell": "872a100...",
-  "windowStart": "2026-03-27T14:00:00Z"
-}
+```bash
+curl 'http://localhost:3000/api/demo/weather?scenario=sf-rain-v1'
 ```
 
-OpenAPI spec available at `GET /api/v1/openapi`.
+The developer console at `/developers` displays the exact request and response. OpenAPI 3.1 is served at `/api/v1/openapi`.
 
-## Project structure
+The paid endpoint is disabled until all x402 variables are configured. Missing configuration returns `503 INTEGRATION_DISABLED`; GroundSignal never inserts a zero-address or facilitator fallback.
 
-```
-src/
-  app/
-    layout.tsx                    # MiniKit + wagmi + query providers
-    page.tsx                      # landing + verify
-    (protected)/
-      observe/page.tsx            # GPS + baseline + observation form
-      dashboard/page.tsx          # map + earnings history
-    api/
-      verify-proof/route.ts       # World ID server verification
-      observations/route.ts       # submit observation
-      v1/
-        weather/route.ts          # x402-gated agent API
-        openapi/route.ts          # OpenAPI spec
-  lib/
-    x402/config.ts                # x402 server + route configs
-    weather/openmeteo.ts          # Open-Meteo client
-    weather/consensus.ts          # H3 grouping + signal scoring
-    db/index.ts                   # SQLite connection
-    db/schema.ts                  # tables + migrations
-    providers.tsx                 # client-side provider tree
-  components/
-    VerifyButton.tsx              # MiniKit vs IDKit detection
-    WeatherObserver.tsx           # condition quick-select UI
-    ObservationMap.tsx            # Leaflet hex map
-    SignalBadge.tsx               # signal tier pill
-  types/
-    weather.ts                    # shared types + signal prices
-xmtp/
-  agent.ts                        # XMTP messaging agent
-  handlers.ts                     # message parsing + routing
-scripts/
-  seed.ts                         # populate demo observations
+## Runtime modes
+
+`GROUNDSIGNAL_MODE=demo` is the default and the only supported Vercel mode. It never imports or initializes SQLite. Server APIs use immutable fixtures; visitor data stays under the versioned browser key `groundsignal.demo.v1`.
+
+`GROUNDSIGNAL_MODE=sqlite` is for one writable Node process:
+
+```bash
+GROUNDSIGNAL_MODE=sqlite npm run db:migrate
+GROUNDSIGNAL_MODE=sqlite npm run db:seed
+GROUNDSIGNAL_MODE=sqlite npm run dev
 ```
 
-## Development phases
+SQLite mode is not supported on stateless, multi-instance, or serverless deployment. See [Self-hosting](docs/SELF_HOSTING.md).
 
-See `PHASES.md` for the full build roadmap.
+## Project map
 
-| Phase | Description | Status |
-|-------|-------------|--------|
-| 0 | Scaffold + schema + stubs | Done |
-| 1 | World ID + observation submission | Pending |
-| 2 | x402 agent API + consensus engine | Pending |
-| 3 | Map visualization + earnings dashboard | Pending |
-| 4 | Demo polish + E2E testing | Pending |
-| 5 | XMTP agent (bonus) | Pending |
+```text
+src/core/        framework-independent rules, schemas, fixtures
+src/server/      runtime config, SQLite, sessions, weather adapter
+src/app/         Next.js pages and public Route Handlers
+src/components/  interactive field-journal UI
+xmtp/            standalone messaging process
+examples/        agent buyer example
+docs/            architecture, threat model, demo, self-hosting
+```
 
-## Demo script (2 min)
+## Optional integrations
 
-1. Open in World App — verified, GPS locked, model baseline displayed
-2. Quick-tap conditions — 5 seconds to submit
-3. Multiple humans submit same area — consensus builds on the map
-4. Agent queries API — x402 payment, consensus response with signal strength
-5. Side-by-side: "Model said clear. 8 verified humans say rain. Confidence: 92%."
-6. Earnings dashboard — humans earning from agent queries
+Visit `/lab` for configuration status. A configured adapter is not called verified until an owner runs and records the external acceptance gate.
 
----
+- World ID: IDKit 4 RP signatures and server verification. Proof bodies and raw coordinates are never logged.
+- x402: Base Sepolia through `https://x402.org/facilitator`; settlement occurs only after a successful handler response.
+- AgentKit: hooks-based verification with atomic SQLite usage and nonce storage for a three-request free trial.
+- XMTP: standalone listener that calls GroundSignal over HTTP rather than importing its database.
 
-Hackathon deadline: **Sunday March 29, 2026, 7:30 AM PT**
+Weather model data is attributed to [Open-Meteo](https://open-meteo.com/). Map tiles are attributed to [OpenStreetMap](https://www.openstreetmap.org/copyright).
+
+## Documentation
+
+- [Architecture](docs/ARCHITECTURE.md)
+- [Threat model](docs/THREAT_MODEL.md)
+- [Demo guide](docs/DEMO.md)
+- [Self-hosting](docs/SELF_HOSTING.md)
+- [Project provenance](docs/PROVENANCE.md)
+- [Contributing](CONTRIBUTING.md)
+- [Security policy](SECURITY.md)
+
+## License
+
+[MIT](LICENSE)

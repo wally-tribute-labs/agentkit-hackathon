@@ -1,49 +1,36 @@
-import { Agent, getTestUrl } from '@xmtp/agent-sdk';
-import { initSchema } from '../src/lib/db/schema';
-import { parseWeatherQuery, queryWeather, formatWeatherReport, getHelpText } from './handlers';
-
-// Ensure SQLite schema exists before handling any messages
-initSchema();
+import { Agent, getTestUrl } from "@xmtp/agent-sdk";
+import { createAgentBuyerFetch } from "../src/integrations/agent-buyer";
+import { formatWeatherReport, getHelpText, parseCommand, queryGroundSignal } from "./handlers";
 
 async function main() {
+  const integrationMode = process.env.GROUNDSIGNAL_XMTP_MODE === "integration";
+  const privateKey = process.env.AGENT_PRIVATE_KEY as `0x${string}` | undefined;
+  if (integrationMode && !privateKey) {
+    throw new Error("AGENT_PRIVATE_KEY is required when GROUNDSIGNAL_XMTP_MODE=integration.");
+  }
+  const request = integrationMode && privateKey ? createAgentBuyerFetch(privateKey) : fetch;
   const agent = await Agent.createFromEnv();
-
-  agent.on('start', (ctx) => {
-    console.log(`Weather Oracle agent running`);
-    console.log(`Address: ${ctx.getClientAddress()}`);
-    console.log(`Test URL: ${getTestUrl(ctx.client)}`);
-    console.log(`Send "weather <lat>,<lon>" to get human-verified weather`);
+  agent.on("start", (context) => {
+    console.log("GroundSignal XMTP agent running");
+    console.log(`Address: ${context.getClientAddress()}`);
+    console.log(`Test URL: ${getTestUrl(context.client)}`);
   });
-
-  agent.on('text', async (ctx) => {
-    const text = ctx.message.content;
-    const result = parseWeatherQuery(text);
-
-    if (result.type === 'help') {
-      await ctx.sendTextReply(getHelpText());
-      return;
-    }
-
-    if (result.type === 'error') {
-      await ctx.sendTextReply(result.message);
-      return;
-    }
-
-    // Weather query
+  agent.on("text", async (context) => {
+    const command = parseCommand(context.message.content);
+    if (command.type === "help") return context.sendTextReply(getHelpText());
+    if (command.type === "error") return context.sendTextReply(command.message);
     try {
-      const response = await queryWeather(result.lat, result.lon);
-      const report = formatWeatherReport(response);
-      await ctx.sendTextReply(report);
-    } catch (err) {
-      console.error('Weather query failed:', err);
-      await ctx.sendTextReply(`Sorry, failed to fetch weather data. Please try again.`);
+      const response = await queryGroundSignal(command, request);
+      await context.sendTextReply(formatWeatherReport(response));
+    } catch (error) {
+      console.error("GroundSignal API request failed:", error instanceof Error ? error.message : "unknown error");
+      await context.sendTextReply("GroundSignal could not complete that request. Check the API and integration status, then try again.");
     }
   });
-
   await agent.start();
 }
 
-main().catch((err) => {
-  console.error('Agent failed to start:', err);
-  process.exit(1);
+void main().catch((error) => {
+  console.error("GroundSignal XMTP agent failed to start:", error instanceof Error ? error.message : "unknown error");
+  process.exitCode = 1;
 });

@@ -1,0 +1,26 @@
+name: Feature request
+description: Propose a focused improvement to the GroundSignal reference implementation.
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or opportunity
+      description: Explain the developer, recruiter, or protocol outcome this would improve.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: Keep v1 constraints in mind; weather remains the only supported adapter.
+    validations:
+      required: true
+  - type: checkboxes
+    id: constraints
+    attributes:
+      label: GroundSignal constraints
+      options:
+        - label: The default demo remains credential-free and deterministic.
+          required: true
+        - label: Simulated behavior remains explicitly labeled.
+          required: true
