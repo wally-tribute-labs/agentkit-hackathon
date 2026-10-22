@@ -7,7 +7,7 @@ type ConsoleTab = "demo" | "x402";
 export function DeveloperConsole() {
   const [baseUrl, setBaseUrl] = useState("http://localhost:3000");
   const [tab, setTab] = useState<ConsoleTab>("demo");
-  const [response, setResponse] = useState<string>("Select Run request to call the real endpoint.");
+  const [response, setResponse] = useState<string>("Run the request to call this endpoint for real. The status, payment headers, and body land here.");
   const [status, setStatus] = useState<string>("READY");
   const [copied, setCopied] = useState(false);
   useEffect(() => {
@@ -41,20 +41,28 @@ export function DeveloperConsole() {
 
   return (
     <div className="developer-console">
-      <div className="console-tabs" role="tablist" aria-label="API mode">
-        <button role="tab" aria-selected={tab === "demo"} onClick={() => setTab("demo")}>Demo API <small>FREE</small></button>
-        <button role="tab" aria-selected={tab === "x402"} onClick={() => setTab("x402")}>x402 Testnet <small>OPTIONAL</small></button>
+      <div className="console-bar">
+        <div className="console-tabs" role="tablist" aria-label="API mode">
+          <button role="tab" aria-selected={tab === "demo"} onClick={() => setTab("demo")}>Demo API <small>FREE</small></button>
+          <button role="tab" aria-selected={tab === "x402"} onClick={() => setTab("x402")}>x402 Testnet <small>OPTIONAL</small></button>
+        </div>
+        <span className="console-hint">GET · JSON · no key required</span>
       </div>
       <div className="console-grid">
         <section className="request-builder">
-          <div className="panel-heading"><span>REQUEST</span><strong>GET</strong></div>
+          <div className="panel-heading"><span>Request</span><strong>GET</strong></div>
           <label>Endpoint<input readOnly value={endpoint} /></label>
-          <div className="code-block"><pre>{curl}</pre><button onClick={() => void copy()}>{copied ? "Copied" : "Copy cURL"}</button></div>
-          <div className="request-notice">{tab === "demo" ? <><b>Immutable server fixture.</b> This does not include your browser-local observation.</> : <><b>Base Sepolia only.</b> Unconfigured environments return a controlled 503 before any facilitator call.</>}</div>
+          <div className="code-block">
+            <pre>{curl}</pre>
+            <button onClick={() => void copy()} aria-live="polite">{copied ? "Copied" : "Copy cURL"}</button>
+          </div>
+          <p className="request-notice">{tab === "demo"
+            ? <><b>Immutable server fixture.</b> This response does not include your browser-local observation.</>
+            : <><b>Base Sepolia only.</b> An unconfigured environment returns a controlled 503 before any facilitator call.</>}</p>
           <button className="button button-primary" onClick={() => void run()}>Run request</button>
         </section>
         <section className="response-inspector">
-          <div className="panel-heading"><span>RESPONSE</span><strong>{status}</strong></div>
+          <div className="panel-heading"><span>Response</span><strong>{status}</strong></div>
           <pre aria-live="polite">{response}</pre>
         </section>
       </div>

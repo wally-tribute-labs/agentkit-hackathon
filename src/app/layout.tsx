@@ -1,14 +1,16 @@
 import type { Metadata, Viewport } from "next";
-import { IBM_Plex_Mono, IBM_Plex_Sans, Newsreader } from "next/font/google";
+import { Archivo, Azeret_Mono, Instrument_Sans } from "next/font/google";
 import { SiteHeader } from "@/components/site-header";
 import "./globals.css";
 
-const newsreader = Newsreader({ subsets: ["latin"], variable: "--font-newsreader", display: "swap" });
-const plexSans = IBM_Plex_Sans({
-  subsets: ["latin"], variable: "--font-plex-sans", display: "swap", weight: ["400", "500", "600", "700"],
+const archivo = Archivo({
+  subsets: ["latin"], variable: "--font-archivo", display: "swap", axes: ["wdth"],
 });
-const plexMono = IBM_Plex_Mono({
-  subsets: ["latin"], variable: "--font-plex-mono", display: "swap", weight: ["400", "500", "600"],
+const instrumentSans = Instrument_Sans({
+  subsets: ["latin"], variable: "--font-instrument-sans", display: "swap",
+});
+const azeretMono = Azeret_Mono({
+  subsets: ["latin"], variable: "--font-azeret-mono", display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -26,19 +28,21 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image" },
 };
 
-export const viewport: Viewport = { themeColor: "#F1EBDD", colorScheme: "light" };
+export const viewport: Viewport = { themeColor: "#101D22", colorScheme: "light" };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" data-scroll-behavior="smooth" className={`${newsreader.variable} ${plexSans.variable} ${plexMono.variable}`}>
+    <html lang="en" data-scroll-behavior="smooth" className={`${archivo.variable} ${instrumentSans.variable} ${azeretMono.variable}`}>
       <body>
         <a className="skip-link" href="#main-content">Skip to content</a>
         <SiteHeader />
         {children}
         <footer className="site-footer">
-          <span>GroundSignal / open field protocol</span>
-          <span>Weather data attributed to <a href="https://open-meteo.com/" rel="noreferrer">Open-Meteo</a></span>
-          <span>MIT licensed · v1 reference implementation</span>
+          <div className="site-footer-inner section-shell">
+            <span className="footer-mark">GroundSignal · open field protocol</span>
+            <span>Weather data from <a href="https://open-meteo.com/" rel="noreferrer">Open-Meteo</a></span>
+            <span>MIT licensed · v1 reference implementation</span>
+          </div>
         </footer>
       </body>
     </html>

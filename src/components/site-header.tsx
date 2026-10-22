@@ -1,4 +1,8 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { SkyCover } from "./sky-cover";
 
 const links = [
   ["Field test", "/demo"],
@@ -8,16 +12,21 @@ const links = [
 ] as const;
 
 export function SiteHeader() {
+  const pathname = usePathname();
   return (
     <header className="site-header">
-      <Link className="wordmark" href="/" aria-label="GroundSignal home">
-        <span className="wordmark-mark" aria-hidden="true">GS</span>
-        <span>GroundSignal</span>
-      </Link>
-      <nav aria-label="Primary navigation">
-        {links.map(([label, href]) => <Link href={href} key={href}>{label}</Link>)}
-      </nav>
-      <span className="header-status"><i aria-hidden="true" /> deterministic demo</span>
+      <div className="site-header-inner section-shell">
+        <Link className="wordmark" href="/" aria-label="GroundSignal home">
+          <SkyCover fraction={0.75} size={21} tone="ground" />
+          <span>GroundSignal</span>
+        </Link>
+        <nav className="site-nav" aria-label="Primary navigation">
+          {links.map(([label, href]) => (
+            <Link href={href} key={href} aria-current={pathname === href ? "page" : undefined}>{label}</Link>
+          ))}
+        </nav>
+        <span className="header-reading"><i aria-hidden="true" /> deterministic demo</span>
+      </div>
     </header>
   );
 }

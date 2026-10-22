@@ -4,7 +4,7 @@ export function StatusStamp({ children, tone = "green" }: {
   children: React.ReactNode;
   tone?: "green" | "orange" | "blue" | "red" | "ink";
 }) {
-  return <span className={`stamp stamp-${tone}`}>{children}</span>;
+  return <span className={`tag tag-${tone}`}>{children}</span>;
 }
 
 export function SignalStamp({ tier }: { tier: SignalTier | null }) {

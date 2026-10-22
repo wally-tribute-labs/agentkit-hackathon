@@ -4,7 +4,13 @@ import dynamic from "next/dynamic";
 import { useState } from "react";
 import type { WeatherCondition } from "@/core/types";
 import { SF_RAIN_SCENARIO } from "@/core/scenario";
+import { SkyCover } from "./sky-cover";
 import { StatusStamp } from "./status-stamp";
+
+/** Sky cover each condition implies, so the picker reads as a station plot. */
+const skyCover: Record<WeatherCondition, number> = {
+  clear: 0, haze: 0.25, windy: 0.25, cloudy: 0.5, fog: 0.5, rain: 1, snow: 1, storm: 1,
+};
 
 const WorldIdWidget = dynamic(() => import("./world-id-widget"), { ssr: false });
 const LeafletObserverMap = dynamic(() => import("./leaflet-observer-map"), {
@@ -26,24 +32,24 @@ export function ObservationSandbox({ mode, worldIdConfigured }: { mode: "demo" |
     longitude: SF_RAIN_SCENARIO.longitude,
     label: "Demo location · San Francisco",
   });
-  const [status, setStatus] = useState<string | null>(null);
+  const [status, setStatus] = useState<{ tone: "info" | "error"; message: string } | null>(null);
 
   function requestLocation() {
     if (!navigator.geolocation) {
-      setStatus("Location is unavailable. The demo location remains selected.");
+      setStatus({ tone: "info", message: "This browser does not offer location. The demo location stays selected." });
       return;
     }
-    setStatus("Requesting location…");
+    setStatus({ tone: "info", message: "Requesting location…" });
     navigator.geolocation.getCurrentPosition(
       (position) => {
         if (position.coords.accuracy > 2_000) {
-          setStatus("Location accuracy is too low. The demo location remains selected.");
+          setStatus({ tone: "info", message: `Accuracy is ±${Math.round(position.coords.accuracy)} m, wider than the 2,000 m limit. The demo location stays selected.` });
           return;
         }
         setLocation({ latitude: position.coords.latitude, longitude: position.coords.longitude, accuracy: position.coords.accuracy, label: `Current location · ±${Math.round(position.coords.accuracy)} m` });
-        setStatus("Location acquired. Coordinates are used transiently and are not stored.");
+        setStatus({ tone: "info", message: "Location acquired. Coordinates are used for this submission only and are never stored." });
       },
-      () => setStatus("Location permission was denied or timed out. The demo location remains selected."),
+      () => setStatus({ tone: "info", message: "Location was denied or timed out. The demo location stays selected." }),
       { enableHighAccuracy: true, timeout: 8_000, maximumAge: 60_000 },
     );
   }
@@ -68,7 +74,7 @@ export function ObservationSandbox({ mode, worldIdConfigured }: { mode: "demo" |
           condition, intensity, feel, note: note || undefined,
         },
       }));
-      setStatus("Saved to this browser only. Open the field test to inspect the recalculated consensus.");
+      setStatus({ tone: "info", message: "Saved to this browser only. Open the field test to see the recalculated consensus." });
       return;
     }
     const response = await fetch("/api/observations", {
@@ -82,7 +88,9 @@ export function ObservationSandbox({ mode, worldIdConfigured }: { mode: "demo" |
       }),
     });
     const body = await response.json() as { error?: { message?: string } };
-    setStatus(response.ok ? "Observation saved to the local SQLite repository." : body.error?.message ?? "Submission failed.");
+    setStatus(response.ok
+      ? { tone: "info", message: "Observation saved to the local SQLite repository." }
+      : { tone: "error", message: body.error?.message ?? `The server rejected the observation with ${response.status} ${response.statusText}.` });
   }
 
   return (
@@ -101,7 +109,12 @@ export function ObservationSandbox({ mode, worldIdConfigured }: { mode: "demo" |
 
       <fieldset><legend>2 / What is happening?</legend>
         <div className="choice-grid">
-          {(["clear", "cloudy", "rain", "snow", "fog", "storm", "windy", "haze"] as WeatherCondition[]).map((item) => <button type="button" aria-pressed={condition === item} onClick={() => setCondition(item)} key={item}>{item}</button>)}
+          {(["clear", "cloudy", "rain", "snow", "fog", "storm", "windy", "haze"] as WeatherCondition[]).map((item) => (
+            <button type="button" aria-pressed={condition === item} onClick={() => setCondition(item)} key={item}>
+              <SkyCover fraction={skyCover[item]} size={17} tone={condition === item ? "ground" : "muted"} />
+              {item}
+            </button>
+          ))}
         </div>
       </fieldset>
 
@@ -112,7 +125,12 @@ export function ObservationSandbox({ mode, worldIdConfigured }: { mode: "demo" |
 
       <label className="note-field">Optional field note <span>{note.length}/280</span><textarea maxLength={280} value={note} onChange={(event) => setNote(event.target.value)} placeholder="What evidence can another observer corroborate?" /></label>
       <button className="button button-primary submit-observation" disabled={mode === "sqlite" && !verified}>Submit {mode === "demo" ? "browser-local" : "verified"} observation</button>
-      {status ? <p className="form-status" role="status">{status}</p> : null}
+      {status ? (
+        <p
+          className={status.tone === "error" ? "form-error" : "form-status"}
+          role={status.tone === "error" ? "alert" : "status"}
+        >{status.message}</p>
+      ) : null}
     </form>
   );
 }

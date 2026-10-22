@@ -17,8 +17,8 @@ export default function LeafletObserverMap({ latitude, longitude, label }: { lat
         maxZoom: 19,
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
       }).addTo(map);
-      leaflet.circle([latitude, longitude], { radius: 530, color: "#f05a28", fillColor: "#f05a28", fillOpacity: .1, weight: 2 }).addTo(map);
-      leaflet.circleMarker([latitude, longitude], { radius: 6, color: "#171713", fillColor: "#f05a28", fillOpacity: 1, weight: 2 }).addTo(map);
+      leaflet.circle([latitude, longitude], { radius: 530, color: "#e08a1e", fillColor: "#e08a1e", fillOpacity: .09, weight: 2, dashArray: "5 4" }).addTo(map);
+      leaflet.circleMarker([latitude, longitude], { radius: 6, color: "#101d22", fillColor: "#e08a1e", fillOpacity: 1, weight: 2 }).addTo(map);
       cleanup = () => map.remove();
     });
     return () => { disposed = true; cleanup(); };

@@ -1,3 +1,7 @@
+> **Project status — 2026-10-22:** GroundSignal preserved as a portfolio/hackathon project; no live network or production adoption claimed.
+>
+> This branch preserves the local implementation and documentation. Backup preparation did not rerun application tests, install software, call model providers, deploy a service or establish release readiness. Credentials and runtime state are excluded.
+
 # GroundSignal
 
 [![CI](https://github.com/wally-tribute-labs/agentkit-hackathon/actions/workflows/ci.yml/badge.svg)](https://github.com/wally-tribute-labs/agentkit-hackathon/actions/workflows/ci.yml)

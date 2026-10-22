@@ -8,6 +8,13 @@ const tierThresholds: Array<{ tier: SignalTier; position: number }> = [
 ];
 
 export function ConsensusTrace({ observations }: { observations: ObservationEvidence[] }) {
+  if (observations.length === 0) {
+    return (
+      <div className="trace trace-empty" role="region" aria-label="Consensus trace, no reports yet">
+        <p>No reports yet. Play the field test, or step forward, to watch observers arrive and the tier climb.</p>
+      </div>
+    );
+  }
   return (
     <div
       className="trace"
