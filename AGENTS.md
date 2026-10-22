@@ -1,3 +1,5 @@
+> Project status — 2026-10-22: retired at Walter’s direction. Source is preserved at https://github.com/wally-tribute-labs/agentkit-hackathon/tree/codex/retirement-2026-10-22. No active feature work is requested; the documentation below is retained for historical context.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know
