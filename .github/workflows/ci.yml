@@ -25,7 +25,8 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
-      - run: npm audit --omit=dev --audit-level=high
+      # Fails on high/critical prod advisories; allowlists only the unfixable zod 3 one (see script).
+      - run: node scripts/audit-prod.mjs
 
   e2e:
     runs-on: ubuntu-latest
